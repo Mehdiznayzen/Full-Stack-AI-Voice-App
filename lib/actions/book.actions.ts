@@ -6,6 +6,25 @@ import { generateSlug, serializeData } from "../utils";
 import Book from "@/database/models/book.model";
 import BookSegment from "@/database/models/book-segment.model";
 
+export const getAllBooks = async () => {
+  try {
+    await connectToDatabase();
+
+    const books = await Book.find().sort({ createdAt: -1 }).lean();
+
+    return {
+      success: true,
+      data: serializeData(books), // clé "data" pour être cohérent avec ta page
+    };
+  } catch (err) {
+    console.error('Error fetching books:', err);
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Something went wrong",
+    };
+  }
+};
+
 export const checkBookExists = async (title: string) => {
     try {
         await connectToDatabase();
@@ -28,7 +47,7 @@ export const checkBookExists = async (title: string) => {
         console.error('Error checking book exists', err);
         return {
             exists: false, 
-            error: err,
+            error: err instanceof Error ? err.message : "Something went wrong",
             success: false
         }
     }
@@ -59,17 +78,17 @@ export const createBook = async (data: CreateBook) => {
 
         return {
             success: false,
-            error: err
+            error: err instanceof Error ? err.message : "Unknown error"
         }
     }
 }
 
-export const saveBookSegments = async (bookId: string,clerckId: string,segments: TextSegment[]) => {
+export const saveBookSegments = async (bookId: string,clerkId: string,segments: TextSegment[]) => {
   try {
     await connectToDatabase();
 
     const segmentsToInsert = segments.map(({ text, segmentIndex, pageNumber, wordCount }) => ({
-        clerckId,
+        clerkId,
         bookId,
         content: text,
         segmentIndex,
@@ -90,7 +109,7 @@ export const saveBookSegments = async (bookId: string,clerckId: string,segments:
 
     return {
       success: false,
-      error: err,
+      error: err instanceof Error ? err.message : "Something went wrong"
     };
   }
 };
